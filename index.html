@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Town Character Sheet Demo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Town Sheet Demo</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,7 +12,7 @@
       padding: 0;
     }
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 20px auto;
       background-color: #fff;
       padding: 20px;
@@ -49,9 +49,17 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      margin-top: 10px;
     }
     .btn:hover {
       background-color: #45a049;
+    }
+    .shop {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      background-color: #fafafa;
     }
     .result {
       margin-top: 20px;
@@ -63,68 +71,127 @@
 </head>
 <body>
   <div class="container">
-    <h1>Town Character Sheet</h1>
-    <form id="npcForm">
+    <h1>Town Sheet Creator</h1>
+    <form id="townForm">
+      <!-- Town Information -->
       <div class="form-group">
-        <label for="npcName">NPC Name:</label>
-        <input type="text" id="npcName" name="npcName" required>
+        <label for="townName">Town Name:</label>
+        <input type="text" id="townName" name="townName" required>
       </div>
       <div class="form-group">
-        <label for="npcRole">Role/Occupation:</label>
-        <input type="text" id="npcRole" name="npcRole" required>
+        <label for="townDescription">Town Description:</label>
+        <textarea id="townDescription" name="townDescription" rows="3" required></textarea>
       </div>
-      <div class="form-group">
-        <label for="npcDescription">Description:</label>
-        <textarea id="npcDescription" name="npcDescription" rows="4" required></textarea>
-      </div>
-      <div class="form-group">
-        <label for="npcDialogue">Dialogue Options:</label>
-        <textarea id="npcDialogue" name="npcDialogue" rows="3" placeholder="Enter dialogue options, one per line"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="npcStats">Stats (optional, format: stat:value, e.g., Strength:16, Charisma:10):</label>
-        <input type="text" id="npcStats" name="npcStats" placeholder="e.g., Strength:16, Charisma:10">
-      </div>
-      <button type="submit" class="btn">Save Character Sheet</button>
+
+      <!-- Shops Section -->
+      <h2>Shops</h2>
+      <div id="shopsContainer"></div>
+      <button type="button" class="btn" id="addShopBtn">Add Shop</button>
+      <br>
+      <button type="submit" class="btn">Save Town Sheet</button>
     </form>
 
     <div id="result" class="result" style="display:none;"></div>
   </div>
 
   <script>
-    document.getElementById('npcForm').addEventListener('submit', function(event) {
+    let shopCounter = 0; // To assign unique IDs to each shop form
+
+    // Function to add a new shop section
+    function addShop() {
+      shopCounter++;
+
+      // Create a new div for the shop and assign a class for styling
+      const shopDiv = document.createElement('div');
+      shopDiv.className = 'shop';
+      shopDiv.id = `shop-${shopCounter}`;
+
+      // Populate the shop div with form inputs
+      shopDiv.innerHTML = `
+        <h3>Shop ${shopCounter}</h3>
+        <div class="form-group">
+          <label for="shopName-${shopCounter}">Shop Name / Type:</label>
+          <input type="text" id="shopName-${shopCounter}" name="shopName-${shopCounter}" placeholder="e.g., Bar, Alchemy Shop" required>
+        </div>
+        <div class="form-group">
+          <label for="shopKeeper-${shopCounter}">Shopkeeper Name:</label>
+          <input type="text" id="shopKeeper-${shopCounter}" name="shopKeeper-${shopCounter}" placeholder="e.g., Bartender, Alchemist" required>
+        </div>
+        <div class="form-group">
+          <label for="shopInventory-${shopCounter}">Inventory (comma-separated):</label>
+          <input type="text" id="shopInventory-${shopCounter}" name="shopInventory-${shopCounter}" placeholder="e.g., Ale, Beer, Dwarven Ale">
+        </div>
+        <button type="button" class="btn removeShopBtn" onclick="removeShop('${shopDiv.id}')">Remove Shop</button>
+      `;
+
+      document.getElementById('shopsContainer').appendChild(shopDiv);
+    }
+
+    // Function to remove a shop section
+    function removeShop(shopId) {
+      const shopDiv = document.getElementById(shopId);
+      if (shopDiv) {
+        shopDiv.parentNode.removeChild(shopDiv);
+      }
+    }
+
+    // Attach event listener for the "Add Shop" button
+    document.getElementById('addShopBtn').addEventListener('click', addShop);
+
+    // Form submission handler
+    document.getElementById('townForm').addEventListener('submit', function(event) {
       event.preventDefault();
-      
-      // Gather the form data
-      const npcName = document.getElementById('npcName').value.trim();
-      const npcRole = document.getElementById('npcRole').value.trim();
-      const npcDescription = document.getElementById('npcDescription').value.trim();
-      const npcDialogue = document.getElementById('npcDialogue').value.trim().split('\n').filter(line => line.trim() !== '');
-      const npcStats = document.getElementById('npcStats').value.trim();
 
-      // Build the display content
-      let content = `<h2>NPC Character Sheet</h2>
-                     <p><strong>Name:</strong> ${npcName}</p>
-                     <p><strong>Role:</strong> ${npcRole}</p>
-                     <p><strong>Description:</strong> ${npcDescription}</p>`;
-      
-      if (npcDialogue.length > 0) {
-        content += `<p><strong>Dialogue Options:</strong></p><ul>`;
-        npcDialogue.forEach(dialogue => {
-          content += `<li>${dialogue}</li>`;
+      // Gather town details
+      const townName = document.getElementById('townName').value.trim();
+      const townDescription = document.getElementById('townDescription').value.trim();
+
+      // Gather shop details by iterating over shop divs
+      const shops = [];
+      for (let i = 1; i <= shopCounter; i++) {
+        const shopDiv = document.getElementById(`shop-${i}`);
+        if (shopDiv) {
+          const shopName = document.getElementById(`shopName-${i}`).value.trim();
+          const shopKeeper = document.getElementById(`shopKeeper-${i}`).value.trim();
+          const inventoryRaw = document.getElementById(`shopInventory-${i}`).value.trim();
+          // Convert the comma-separated inventory into an array, trimming spaces
+          const inventory = inventoryRaw ? inventoryRaw.split(',').map(item => item.trim()).filter(item => item !== "") : [];
+          shops.push({ shopName, shopKeeper, inventory });
+        }
+      }
+
+      // Build the display content for the town sheet
+      let content = `<h2>Town Sheet</h2>
+                     <p><strong>Town Name:</strong> ${townName}</p>
+                     <p><strong>Description:</strong> ${townDescription}</p>`;
+
+      if (shops.length > 0) {
+        content += `<h3>Shops</h3>`;
+        shops.forEach((shop, index) => {
+          content += `<div style="margin-bottom:15px;">
+                        <p><strong>Shop ${index + 1}:</strong> ${shop.shopName}</p>
+                        <p><strong>Shopkeeper:</strong> ${shop.shopKeeper}</p>`;
+          if (shop.inventory.length > 0) {
+            content += `<p><strong>Inventory:</strong></p><ul>`;
+            shop.inventory.forEach(item => {
+              content += `<li>${item}</li>`;
+            });
+            content += `</ul>`;
+          } else {
+            content += `<p><em>No inventory listed.</em></p>`;
+          }
+          content += `</div>`;
         });
-        content += `</ul>`;
       }
 
-      if (npcStats) {
-        content += `<p><strong>Stats:</strong> ${npcStats}</p>`;
-      }
-      
-      // Display the result in the #result div
+      // Display the result
       const resultDiv = document.getElementById('result');
       resultDiv.innerHTML = content;
       resultDiv.style.display = 'block';
     });
+
+    // Optionally, add one shop by default when the page loads
+    window.onload = addShop;
   </script>
 </body>
 </html>
