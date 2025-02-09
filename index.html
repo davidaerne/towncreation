@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Town Character Sheet Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 4px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    textarea {
+      resize: vertical;
+    }
+    .btn {
+      display: inline-block;
+      background-color: #4CAF50;
+      color: #fff;
+      padding: 10px 20px;
+      text-align: center;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #45a049;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e7f3fe;
+      border-left: 6px solid #2196F3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Town Character Sheet</h1>
+    <form id="npcForm">
+      <div class="form-group">
+        <label for="npcName">NPC Name:</label>
+        <input type="text" id="npcName" name="npcName" required>
+      </div>
+      <div class="form-group">
+        <label for="npcRole">Role/Occupation:</label>
+        <input type="text" id="npcRole" name="npcRole" required>
+      </div>
+      <div class="form-group">
+        <label for="npcDescription">Description:</label>
+        <textarea id="npcDescription" name="npcDescription" rows="4" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="npcDialogue">Dialogue Options:</label>
+        <textarea id="npcDialogue" name="npcDialogue" rows="3" placeholder="Enter dialogue options, one per line"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="npcStats">Stats (optional, format: stat:value, e.g., Strength:16, Charisma:10):</label>
+        <input type="text" id="npcStats" name="npcStats" placeholder="e.g., Strength:16, Charisma:10">
+      </div>
+      <button type="submit" class="btn">Save Character Sheet</button>
+    </form>
+
+    <div id="result" class="result" style="display:none;"></div>
+  </div>
+
+  <script>
+    document.getElementById('npcForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      
+      // Gather the form data
+      const npcName = document.getElementById('npcName').value.trim();
+      const npcRole = document.getElementById('npcRole').value.trim();
+      const npcDescription = document.getElementById('npcDescription').value.trim();
+      const npcDialogue = document.getElementById('npcDialogue').value.trim().split('\n').filter(line => line.trim() !== '');
+      const npcStats = document.getElementById('npcStats').value.trim();
+
+      // Build the display content
+      let content = `<h2>NPC Character Sheet</h2>
+                     <p><strong>Name:</strong> ${npcName}</p>
+                     <p><strong>Role:</strong> ${npcRole}</p>
+                     <p><strong>Description:</strong> ${npcDescription}</p>`;
+      
+      if (npcDialogue.length > 0) {
+        content += `<p><strong>Dialogue Options:</strong></p><ul>`;
+        npcDialogue.forEach(dialogue => {
+          content += `<li>${dialogue}</li>`;
+        });
+        content += `</ul>`;
+      }
+
+      if (npcStats) {
+        content += `<p><strong>Stats:</strong> ${npcStats}</p>`;
+      }
+      
+      // Display the result in the #result div
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = content;
+      resultDiv.style.display = 'block';
+    });
+  </script>
+</body>
+</html>
