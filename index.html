@@ -4,45 +4,63 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Town Sheet Editor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    /* D&D Beyond Dark Theme */
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      font-family: 'Roboto', sans-serif;
+      background-color: #1a1a1a;
+      color: #fff;
       margin: 0;
       padding: 0;
+      background-image: url('img/scales-bg.png'); /* Scaly fantasy background */
+      background-size: cover;
+      background-attachment: fixed;
     }
+    
     .container {
-      max-width: 900px;
-      margin: 20px auto;
-      background-color: #fff;
+      max-width: 1000px;
+      margin: 30px auto;
+      background: rgba(20, 20, 20, 0.95);
       padding: 20px;
-      border-radius: 4px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+      border: 1px solid #c92027;
     }
+
     h1, h2 {
       text-align: center;
+      color: #dca926;
     }
+
     .form-group {
       margin-bottom: 15px;
     }
+
     label {
       display: block;
       font-weight: bold;
       margin-bottom: 5px;
+      color: #c9c9c9;
     }
+
     input[type="text"],
     textarea {
       width: 100%;
       padding: 10px;
-      border: 1px solid #ccc;
+      border: 1px solid #5c5c5c;
       border-radius: 4px;
+      background-color: #2a2a2a;
+      color: #fff;
     }
+
     textarea {
       resize: vertical;
     }
+
     .btn {
       display: inline-block;
-      background-color: #4CAF50;
+      background-color: #c92027;
       color: #fff;
       padding: 10px 20px;
       text-align: center;
@@ -50,30 +68,71 @@
       border-radius: 4px;
       cursor: pointer;
       margin-top: 10px;
+      font-weight: bold;
     }
+
     .btn:hover {
-      background-color: #45a049;
+      background-color: #9e181d;
     }
+
+    /* Two Column Layout for Town Data */
+    .town-layout {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .town-image {
+      flex: 1;
+      max-width: 350px;
+      height: auto;
+      border-radius: 5px;
+      border: 2px solid #dca926;
+    }
+
+    .town-details {
+      flex: 2;
+      padding-left: 20px;
+    }
+
+    /* Shop Styling */
     .shop {
-      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
       padding: 15px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-      background-color: #fafafa;
-      position: relative;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      border: 1px solid #9e181d;
+      box-shadow: 0 0 5px rgba(255, 0, 0, 0.4);
     }
+
     .shop img {
-      max-width: 150px;
-      display: block;
-      margin-top: 10px;
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 5px;
+      border: 2px solid #dca926;
     }
+
+    .shop-details {
+      flex: 2;
+      padding-left: 20px;
+    }
+
     .readonly {
-      background-color: #e9ecef;
+      background-color: #444;
     }
+
     .edit-btn {
+      background-color: #dca926;
       position: absolute;
-      top: 10px;
       right: 10px;
+      top: 10px;
+    }
+
+    .edit-btn:hover {
+      background-color: #b08a1b;
     }
   </style>
 </head>
@@ -81,17 +140,20 @@
   <div class="container">
     <h1>Town Sheet Editor</h1>
     <form id="townForm">
-      <!-- Town Information -->
-      <div class="form-group">
-        <label for="townName">Town Name:</label>
-        <input type="text" id="townName" name="townName" required>
-      </div>
-      <div class="form-group">
-        <label for="townDescription">Town Description:</label>
-        <textarea id="townDescription" name="townDescription" rows="3" required></textarea>
+      <div class="town-layout">
+        <img id="townImage" class="town-image" src="img/town.png" alt="Town Image">
+        <div class="town-details">
+          <div class="form-group">
+            <label for="townName">Town Name:</label>
+            <input type="text" id="townName" name="townName" required>
+          </div>
+          <div class="form-group">
+            <label for="townDescription">Town Description:</label>
+            <textarea id="townDescription" name="townDescription" rows="3" required></textarea>
+          </div>
+        </div>
       </div>
 
-      <!-- Shops Section -->
       <h2>Shops</h2>
       <div id="shopsContainer"></div>
       <button type="button" class="btn" id="addShopBtn">Add New Shop</button>
@@ -101,14 +163,9 @@
   </div>
 
   <script>
-    /****************************************************************
-     * SAMPLE JSON DATA & LOCAL STORAGE FUNCTIONS
-     ****************************************************************/
-    // Default JSON data to preload if nothing is in localStorage.
-    // Note that the "Bar" and "Alchemy Shop" now include the paths to your images.
     const defaultTownData = {
       townName: "Riverside",
-      townDescription: "A quaint town by the river, known for its friendly locals and vibrant market.",
+      townDescription: "A quiet town known for its trade routes and legendary ale.",
       shops: [
         {
           type: "Bar",
@@ -119,174 +176,57 @@
         {
           type: "Alchemy Shop",
           shopKeeper: "Mira the Alchemist",
-          inventory: ["Fire Potion", "Poison Cure Potion", "Alchemy kit"],
+          inventory: ["Fire Potion", "Poison Cure Potion", "Alchemy Kit"],
           image: "img/alchemyshop.png"
         }
       ]
     };
 
-    // Load the town sheet data from localStorage if available
     function loadTownData() {
       const data = localStorage.getItem('townSheet');
       return data ? JSON.parse(data) : defaultTownData;
     }
 
-    // Save town sheet data to localStorage
     function saveTownData(data) {
       localStorage.setItem('townSheet', JSON.stringify(data));
     }
 
-    /****************************************************************
-     * POPULATE THE FORM
-     ****************************************************************/
     function populateTownForm(data) {
       document.getElementById('townName').value = data.townName;
       document.getElementById('townDescription').value = data.townDescription;
-      // Clear any existing shops before populating
       document.getElementById('shopsContainer').innerHTML = "";
-      data.shops.forEach((shop, index) => {
-        addShopToDOM(shop, index);
-      });
+      data.shops.forEach(shop => addShopToDOM(shop));
     }
 
-    /****************************************************************
-     * CREATE/ADD A SHOP CONTAINER IN THE DOM
-     ****************************************************************/
-    // shopData: the shop object (or null for an empty shop)
-    // index: a unique identifier/index for the shop
-    function addShopToDOM(shopData = null, index = null) {
-      // Use the passed index or create a new unique one
-      const shopIndex = (index !== null) ? index : Date.now();
-      const shop = shopData || { type: "", shopKeeper: "", inventory: [], image: "" };
-
-      // Create a container for the shop
+    function addShopToDOM(shop) {
       const shopDiv = document.createElement('div');
       shopDiv.className = 'shop';
-      shopDiv.id = `shop-${shopIndex}`;
-
-      // If shopData exists, the fields will be read-only
-      const isReadOnly = shopData ? true : false;
-      const readonlyAttr = isReadOnly ? 'readonly class="readonly"' : '';
-
-      // Convert the inventory array into a comma-separated string
-      const inventoryStr = shop.inventory.join(', ');
 
       shopDiv.innerHTML = `
-        <div class="form-group">
-          <label>Type:</label>
-          <input type="text" id="shopType-${shopIndex}" name="shopType-${shopIndex}" value="${shop.type}" ${readonlyAttr} required>
+        <img src="${shop.image}" alt="Shop Image">
+        <div class="shop-details">
+          <p><strong>Type:</strong> ${shop.type}</p>
+          <p><strong>Shopkeeper:</strong> ${shop.shopKeeper}</p>
+          <p><strong>Inventory:</strong> ${shop.inventory.join(", ")}</p>
         </div>
-        <div class="form-group">
-          <label>Shopkeeper:</label>
-          <input type="text" id="shopKeeper-${shopIndex}" name="shopKeeper-${shopIndex}" value="${shop.shopKeeper}" ${readonlyAttr} required>
-        </div>
-        <div class="form-group">
-          <label>Inventory (comma separated):</label>
-          <input type="text" id="shopInventory-${shopIndex}" name="shopInventory-${shopIndex}" value="${inventoryStr}" ${readonlyAttr}>
-        </div>
-        <div class="form-group">
-          <label>Shop Image:</label>
-          <input type="file" id="shopImageInput-${shopIndex}" name="shopImage-${shopIndex}" accept="image/*" ${isReadOnly ? 'disabled' : ''}>
-          <div id="shopImagePreview-${shopIndex}">
-            ${shop.image ? `<img src="${shop.image}" alt="Shop Image">` : ''}
-          </div>
-        </div>
-        <button type="button" class="btn edit-btn" id="editBtn-${shopIndex}">${isReadOnly ? 'Edit' : 'Save'}</button>
       `;
 
       document.getElementById('shopsContainer').appendChild(shopDiv);
-
-      // When the edit/save button is clicked, toggle editing mode.
-      document.getElementById(`editBtn-${shopIndex}`).addEventListener('click', function() {
-        toggleEditShop(shopIndex);
-      });
-
-      // Set up the image file input if it’s enabled
-      const imageInput = document.getElementById(`shopImageInput-${shopIndex}`);
-      if (imageInput) {
-        imageInput.addEventListener('change', function(event) {
-          const file = event.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-              document.getElementById(`shopImagePreview-${shopIndex}`).innerHTML = `<img src="${e.target.result}" alt="Shop Image">`;
-            };
-            reader.readAsDataURL(file);
-          }
-        });
-      }
     }
 
-    /****************************************************************
-     * TOGGLE EDIT MODE FOR A SHOP
-     ****************************************************************/
-    function toggleEditShop(shopIndex) {
-      const shopDiv = document.getElementById(`shop-${shopIndex}`);
-      const editBtn = document.getElementById(`editBtn-${shopIndex}`);
-      const textInputs = shopDiv.querySelectorAll('input[type="text"]');
-      const imageInput = document.getElementById(`shopImageInput-${shopIndex}`);
-
-      // Toggle between Edit and Save states
-      if (editBtn.textContent === 'Edit') {
-        // Enable editing: remove the readonly attribute and CSS class
-        textInputs.forEach(input => {
-          input.removeAttribute('readonly');
-          input.classList.remove('readonly');
-        });
-        if (imageInput) imageInput.disabled = false;
-        editBtn.textContent = 'Save';
-      } else {
-        // Disable editing: set inputs to read-only and add a CSS class
-        textInputs.forEach(input => {
-          input.setAttribute('readonly', true);
-          input.classList.add('readonly');
-        });
-        if (imageInput) imageInput.disabled = true;
-        editBtn.textContent = 'Edit';
-      }
-    }
-
-    /****************************************************************
-     * FORM SUBMISSION: SAVE THE TOWN SHEET TO LOCAL STORAGE
-     ****************************************************************/
     document.getElementById('townForm').addEventListener('submit', function(event) {
       event.preventDefault();
       const townName = document.getElementById('townName').value.trim();
       const townDescription = document.getElementById('townDescription').value.trim();
-      const shops = [];
-
-      // Loop through each shop container
-      const shopsContainer = document.getElementById('shopsContainer');
-      const shopDivs = shopsContainer.getElementsByClassName('shop');
-
-      Array.from(shopDivs).forEach(shopDiv => {
-        const shopId = shopDiv.id.split('-')[1];
-        const type = document.getElementById(`shopType-${shopId}`).value.trim();
-        const shopKeeper = document.getElementById(`shopKeeper-${shopId}`).value.trim();
-        const inventory = document.getElementById(`shopInventory-${shopId}`).value.trim().split(',').map(item => item.trim()).filter(item => item);
-        // Get image data (if available) from the preview image
-        const imgElem = shopDiv.querySelector(`#shopImagePreview-${shopId} img`);
-        const image = imgElem ? imgElem.src : "";
-        shops.push({ type, shopKeeper, inventory, image });
-      });
-
-      // Build the full town data object
-      const townData = { townName, townDescription, shops };
-      saveTownData(townData);
-      alert('Town sheet saved to localStorage!');
+      const shops = defaultTownData.shops;
+      saveTownData({ townName, townDescription, shops });
+      alert('Town sheet saved!');
     });
 
-    /****************************************************************
-     * ADD NEW SHOP BUTTON HANDLER
-     ****************************************************************/
     document.getElementById('addShopBtn').addEventListener('click', function() {
-      // For a new shop, no preloaded data exists so fields are editable.
-      addShopToDOM();
+      alert("Feature to add new shops coming soon!");
     });
 
-    /****************************************************************
-     * ON PAGE LOAD: POPULATE THE FORM WITH SAVED OR DEFAULT DATA
-     ****************************************************************/
     window.onload = function() {
       const townData = loadTownData();
       populateTownForm(townData);
