@@ -104,7 +104,8 @@
     /****************************************************************
      * SAMPLE JSON DATA & LOCAL STORAGE FUNCTIONS
      ****************************************************************/
-    // Default JSON data to preload if nothing is in localStorage
+    // Default JSON data to preload if nothing is in localStorage.
+    // Note that the "Bar" and "Alchemy Shop" now include the paths to your images.
     const defaultTownData = {
       townName: "Riverside",
       townDescription: "A quaint town by the river, known for its friendly locals and vibrant market.",
@@ -113,13 +114,13 @@
           type: "Bar",
           shopKeeper: "John the Bartender",
           inventory: ["Ale", "Beer", "Dwarven Ale"],
-          image: ""
+          image: "img/bar.png"
         },
         {
           type: "Alchemy Shop",
           shopKeeper: "Mira the Alchemist",
           inventory: ["Fire Potion", "Poison Cure Potion", "Alchemy kit"],
-          image: ""
+          image: "img/alchemyshop.png"
         }
       ]
     };
