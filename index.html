@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Town Sheet Demo</title>
+  <title>Town Sheet Editor</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -60,18 +60,26 @@
       border-radius: 4px;
       margin-bottom: 15px;
       background-color: #fafafa;
+      position: relative;
     }
-    .result {
-      margin-top: 20px;
-      padding: 15px;
-      background-color: #e7f3fe;
-      border-left: 6px solid #2196F3;
+    .shop img {
+      max-width: 150px;
+      display: block;
+      margin-top: 10px;
+    }
+    .readonly {
+      background-color: #e9ecef;
+    }
+    .edit-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Town Sheet Creator</h1>
+    <h1>Town Sheet Editor</h1>
     <form id="townForm">
       <!-- Town Information -->
       <div class="form-group">
@@ -86,112 +94,202 @@
       <!-- Shops Section -->
       <h2>Shops</h2>
       <div id="shopsContainer"></div>
-      <button type="button" class="btn" id="addShopBtn">Add Shop</button>
+      <button type="button" class="btn" id="addShopBtn">Add New Shop</button>
       <br>
       <button type="submit" class="btn">Save Town Sheet</button>
     </form>
-
-    <div id="result" class="result" style="display:none;"></div>
   </div>
 
   <script>
-    let shopCounter = 0; // To assign unique IDs to each shop form
+    /****************************************************************
+     * SAMPLE JSON DATA & LOCAL STORAGE FUNCTIONS
+     ****************************************************************/
+    // Default JSON data to preload if nothing is in localStorage
+    const defaultTownData = {
+      townName: "Riverside",
+      townDescription: "A quaint town by the river, known for its friendly locals and vibrant market.",
+      shops: [
+        {
+          type: "Bar",
+          shopKeeper: "John the Bartender",
+          inventory: ["Ale", "Beer", "Dwarven Ale"],
+          image: ""
+        },
+        {
+          type: "Alchemy Shop",
+          shopKeeper: "Mira the Alchemist",
+          inventory: ["Fire Potion", "Poison Cure Potion", "Alchemy kit"],
+          image: ""
+        }
+      ]
+    };
 
-    // Function to add a new shop section
-    function addShop() {
-      shopCounter++;
+    // Load the town sheet data from localStorage if available
+    function loadTownData() {
+      const data = localStorage.getItem('townSheet');
+      return data ? JSON.parse(data) : defaultTownData;
+    }
 
-      // Create a new div for the shop and assign a class for styling
+    // Save town sheet data to localStorage
+    function saveTownData(data) {
+      localStorage.setItem('townSheet', JSON.stringify(data));
+    }
+
+    /****************************************************************
+     * POPULATE THE FORM
+     ****************************************************************/
+    function populateTownForm(data) {
+      document.getElementById('townName').value = data.townName;
+      document.getElementById('townDescription').value = data.townDescription;
+      // Clear any existing shops before populating
+      document.getElementById('shopsContainer').innerHTML = "";
+      data.shops.forEach((shop, index) => {
+        addShopToDOM(shop, index);
+      });
+    }
+
+    /****************************************************************
+     * CREATE/ADD A SHOP CONTAINER IN THE DOM
+     ****************************************************************/
+    // shopData: the shop object (or null for an empty shop)
+    // index: a unique identifier/index for the shop
+    function addShopToDOM(shopData = null, index = null) {
+      // Use the passed index or create a new unique one
+      const shopIndex = (index !== null) ? index : Date.now();
+      const shop = shopData || { type: "", shopKeeper: "", inventory: [], image: "" };
+
+      // Create a container for the shop
       const shopDiv = document.createElement('div');
       shopDiv.className = 'shop';
-      shopDiv.id = `shop-${shopCounter}`;
+      shopDiv.id = `shop-${shopIndex}`;
 
-      // Populate the shop div with form inputs
+      // If shopData exists, the fields will be read-only
+      const isReadOnly = shopData ? true : false;
+      const readonlyAttr = isReadOnly ? 'readonly class="readonly"' : '';
+
+      // Convert the inventory array into a comma-separated string
+      const inventoryStr = shop.inventory.join(', ');
+
       shopDiv.innerHTML = `
-        <h3>Shop ${shopCounter}</h3>
         <div class="form-group">
-          <label for="shopName-${shopCounter}">Shop Name / Type:</label>
-          <input type="text" id="shopName-${shopCounter}" name="shopName-${shopCounter}" placeholder="e.g., Bar, Alchemy Shop" required>
+          <label>Type:</label>
+          <input type="text" id="shopType-${shopIndex}" name="shopType-${shopIndex}" value="${shop.type}" ${readonlyAttr} required>
         </div>
         <div class="form-group">
-          <label for="shopKeeper-${shopCounter}">Shopkeeper Name:</label>
-          <input type="text" id="shopKeeper-${shopCounter}" name="shopKeeper-${shopCounter}" placeholder="e.g., Bartender, Alchemist" required>
+          <label>Shopkeeper:</label>
+          <input type="text" id="shopKeeper-${shopIndex}" name="shopKeeper-${shopIndex}" value="${shop.shopKeeper}" ${readonlyAttr} required>
         </div>
         <div class="form-group">
-          <label for="shopInventory-${shopCounter}">Inventory (comma-separated):</label>
-          <input type="text" id="shopInventory-${shopCounter}" name="shopInventory-${shopCounter}" placeholder="e.g., Ale, Beer, Dwarven Ale">
+          <label>Inventory (comma separated):</label>
+          <input type="text" id="shopInventory-${shopIndex}" name="shopInventory-${shopIndex}" value="${inventoryStr}" ${readonlyAttr}>
         </div>
-        <button type="button" class="btn removeShopBtn" onclick="removeShop('${shopDiv.id}')">Remove Shop</button>
+        <div class="form-group">
+          <label>Shop Image:</label>
+          <input type="file" id="shopImageInput-${shopIndex}" name="shopImage-${shopIndex}" accept="image/*" ${isReadOnly ? 'disabled' : ''}>
+          <div id="shopImagePreview-${shopIndex}">
+            ${shop.image ? `<img src="${shop.image}" alt="Shop Image">` : ''}
+          </div>
+        </div>
+        <button type="button" class="btn edit-btn" id="editBtn-${shopIndex}">${isReadOnly ? 'Edit' : 'Save'}</button>
       `;
 
       document.getElementById('shopsContainer').appendChild(shopDiv);
-    }
 
-    // Function to remove a shop section
-    function removeShop(shopId) {
-      const shopDiv = document.getElementById(shopId);
-      if (shopDiv) {
-        shopDiv.parentNode.removeChild(shopDiv);
-      }
-    }
+      // When the edit/save button is clicked, toggle editing mode.
+      document.getElementById(`editBtn-${shopIndex}`).addEventListener('click', function() {
+        toggleEditShop(shopIndex);
+      });
 
-    // Attach event listener for the "Add Shop" button
-    document.getElementById('addShopBtn').addEventListener('click', addShop);
-
-    // Form submission handler
-    document.getElementById('townForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-
-      // Gather town details
-      const townName = document.getElementById('townName').value.trim();
-      const townDescription = document.getElementById('townDescription').value.trim();
-
-      // Gather shop details by iterating over shop divs
-      const shops = [];
-      for (let i = 1; i <= shopCounter; i++) {
-        const shopDiv = document.getElementById(`shop-${i}`);
-        if (shopDiv) {
-          const shopName = document.getElementById(`shopName-${i}`).value.trim();
-          const shopKeeper = document.getElementById(`shopKeeper-${i}`).value.trim();
-          const inventoryRaw = document.getElementById(`shopInventory-${i}`).value.trim();
-          // Convert the comma-separated inventory into an array, trimming spaces
-          const inventory = inventoryRaw ? inventoryRaw.split(',').map(item => item.trim()).filter(item => item !== "") : [];
-          shops.push({ shopName, shopKeeper, inventory });
-        }
-      }
-
-      // Build the display content for the town sheet
-      let content = `<h2>Town Sheet</h2>
-                     <p><strong>Town Name:</strong> ${townName}</p>
-                     <p><strong>Description:</strong> ${townDescription}</p>`;
-
-      if (shops.length > 0) {
-        content += `<h3>Shops</h3>`;
-        shops.forEach((shop, index) => {
-          content += `<div style="margin-bottom:15px;">
-                        <p><strong>Shop ${index + 1}:</strong> ${shop.shopName}</p>
-                        <p><strong>Shopkeeper:</strong> ${shop.shopKeeper}</p>`;
-          if (shop.inventory.length > 0) {
-            content += `<p><strong>Inventory:</strong></p><ul>`;
-            shop.inventory.forEach(item => {
-              content += `<li>${item}</li>`;
-            });
-            content += `</ul>`;
-          } else {
-            content += `<p><em>No inventory listed.</em></p>`;
+      // Set up the image file input if it’s enabled
+      const imageInput = document.getElementById(`shopImageInput-${shopIndex}`);
+      if (imageInput) {
+        imageInput.addEventListener('change', function(event) {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              document.getElementById(`shopImagePreview-${shopIndex}`).innerHTML = `<img src="${e.target.result}" alt="Shop Image">`;
+            };
+            reader.readAsDataURL(file);
           }
-          content += `</div>`;
         });
       }
+    }
 
-      // Display the result
-      const resultDiv = document.getElementById('result');
-      resultDiv.innerHTML = content;
-      resultDiv.style.display = 'block';
+    /****************************************************************
+     * TOGGLE EDIT MODE FOR A SHOP
+     ****************************************************************/
+    function toggleEditShop(shopIndex) {
+      const shopDiv = document.getElementById(`shop-${shopIndex}`);
+      const editBtn = document.getElementById(`editBtn-${shopIndex}`);
+      const textInputs = shopDiv.querySelectorAll('input[type="text"]');
+      const imageInput = document.getElementById(`shopImageInput-${shopIndex}`);
+
+      // Toggle between Edit and Save states
+      if (editBtn.textContent === 'Edit') {
+        // Enable editing: remove the readonly attribute and CSS class
+        textInputs.forEach(input => {
+          input.removeAttribute('readonly');
+          input.classList.remove('readonly');
+        });
+        if (imageInput) imageInput.disabled = false;
+        editBtn.textContent = 'Save';
+      } else {
+        // Disable editing: set inputs to read-only and add a CSS class
+        textInputs.forEach(input => {
+          input.setAttribute('readonly', true);
+          input.classList.add('readonly');
+        });
+        if (imageInput) imageInput.disabled = true;
+        editBtn.textContent = 'Edit';
+      }
+    }
+
+    /****************************************************************
+     * FORM SUBMISSION: SAVE THE TOWN SHEET TO LOCAL STORAGE
+     ****************************************************************/
+    document.getElementById('townForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const townName = document.getElementById('townName').value.trim();
+      const townDescription = document.getElementById('townDescription').value.trim();
+      const shops = [];
+
+      // Loop through each shop container
+      const shopsContainer = document.getElementById('shopsContainer');
+      const shopDivs = shopsContainer.getElementsByClassName('shop');
+
+      Array.from(shopDivs).forEach(shopDiv => {
+        const shopId = shopDiv.id.split('-')[1];
+        const type = document.getElementById(`shopType-${shopId}`).value.trim();
+        const shopKeeper = document.getElementById(`shopKeeper-${shopId}`).value.trim();
+        const inventory = document.getElementById(`shopInventory-${shopId}`).value.trim().split(',').map(item => item.trim()).filter(item => item);
+        // Get image data (if available) from the preview image
+        const imgElem = shopDiv.querySelector(`#shopImagePreview-${shopId} img`);
+        const image = imgElem ? imgElem.src : "";
+        shops.push({ type, shopKeeper, inventory, image });
+      });
+
+      // Build the full town data object
+      const townData = { townName, townDescription, shops };
+      saveTownData(townData);
+      alert('Town sheet saved to localStorage!');
     });
 
-    // Optionally, add one shop by default when the page loads
-    window.onload = addShop;
+    /****************************************************************
+     * ADD NEW SHOP BUTTON HANDLER
+     ****************************************************************/
+    document.getElementById('addShopBtn').addEventListener('click', function() {
+      // For a new shop, no preloaded data exists so fields are editable.
+      addShopToDOM();
+    });
+
+    /****************************************************************
+     * ON PAGE LOAD: POPULATE THE FORM WITH SAVED OR DEFAULT DATA
+     ****************************************************************/
+    window.onload = function() {
+      const townData = loadTownData();
+      populateTownForm(townData);
+    };
   </script>
 </body>
 </html>
